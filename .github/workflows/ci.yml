@@ -1,0 +1,46 @@
+name: SideMade CI Pipeline
+
+on: [push]
+
+jobs:
+  style_check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install dependencies
+      run: sudo apt update && sudo apt install -y clang-format
+    - name: Style check
+      run: clang-format --dry-run --Werror src/*.cpp src/*.hpp tests/*.cpp
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y cmake libboost-test-dev libeigen3-dev libyaml-cpp-dev
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make -j
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install all dependencies
+      run: |
+        sudo apt update 
+        sudo apt install -y cmake libboost-test-dev libeigen3-dev libyaml-cpp-dev 
+    - name: Build using cmake
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make -j
+    - name: Run tests
+      run: cd build && ctest --output-on-failure
